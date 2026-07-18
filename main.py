@@ -28,7 +28,7 @@ async def send_chat_periodically(streamer_name, chatroom_id, message, interval_m
 async def check_points_periodically(streamer_name):
     while True:
         try:
-            await asyncio.sleep(60)
+            await asyncio.sleep(120)
             api = KickAPI(config['Private']['token'])
             amount = api.get_points(streamer_name)
             logger.info(f"[POINTS] {streamer_name}: {amount}")
@@ -75,15 +75,21 @@ async def handle_streamer(streamer_config):
 
         websocket_task = asyncio.create_task(kick_websocket_client.connect())
         points_task = asyncio.create_task(check_points_periodically(streamer_name))
-        chat_task = asyncio.create_task(send_chat_periodically(streamer_name, chatroom_id, chat_message, chat_interval))
+        
+        tasks = [websocket_task, points_task]
+        
+        if chat_interval > 0 and chat_message:
+            chat_task = asyncio.create_task(send_chat_periodically(streamer_name, chatroom_id, chat_message, chat_interval))
+            tasks.append(chat_task)
+        else:
+            logger.info(f"[INFO] Chat disabled for {streamer_name}")
 
         try:
-            await asyncio.gather(websocket_task, points_task, chat_task, return_exceptions=True)
+            await asyncio.gather(*tasks, return_exceptions=True)
         except KeyboardInterrupt:
             logger.info("Shutting down...")
-            websocket_task.cancel()
-            points_task.cancel()
-            chat_task.cancel()
+            for task in tasks:
+                task.cancel()
             await kick_websocket_client.disconnect()
     except:
         traceback.print_exc()

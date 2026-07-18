@@ -30,10 +30,18 @@ pip install curl-cffi rnet loguru
             "name": "streamer_name",
             "chat_message": "[emote:37226:KEKW]",
             "chat_interval_minutes": 30
+        },
+        {
+            "name": "streamer_without_chat"
         }
     ]
 }
 ```
+
+**Options:**
+- Set `chat_interval_minutes: 0` to disable chat
+- Omit `chat_message` and `chat_interval_minutes` to disable chat
+- Only `name` is required
 
 ## Usage
 
