@@ -1,0 +1,12 @@
+{
+    "Private": {
+        "token": "YOUR_TOKEN_HERE"
+    },
+    "Streamers": [
+        {
+            "name": "lequ",
+            "chat_message": "[emote:37226:KEKW]",
+            "chat_interval_minutes": 15
+        }
+    ]
+}
