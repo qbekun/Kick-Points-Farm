@@ -5,7 +5,7 @@ Automatically farm points on Kick.com
 ## Installation
 
 ```bash
-pip install curl-cffi rnet loguru
+pip install curl-cffi websockets loguru
 ```
 
 ## Setup
@@ -54,10 +54,18 @@ python main.py
 
 ## Features
 
-- ✅ Farm points automatically
-- ✅ Send chat messages
-- ✅ Monitor points balance
+- ✅ Farm points automatically (every 10s)
+- ✅ Send chat messages (configurable interval)
+- ✅ Monitor points balance (every 2 minutes)
+- ✅ Multi-streamer support
 - ✅ Auto-reconnect on disconnect
+
+## Requirements
+
+- Python 3.7+
+- curl-cffi
+- websockets
+- loguru
 
 ---
 

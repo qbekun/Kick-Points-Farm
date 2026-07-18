@@ -1,8 +1,8 @@
-import rnet,json,asyncio,traceback
+import json,asyncio,traceback
+import websockets
 
 from typing import Dict, Optional
 from dataclasses import dataclass
-from rnet import WebSocket, Message
 from loguru import logger
 
 @dataclass
@@ -13,7 +13,7 @@ class ConnectionState:
 
 class KickWebSocket:
     def __init__(self, data: Dict[str, str], chat_message: str = "KEKW", chat_interval_minutes: int = 30):
-        self.ws: Optional[WebSocket] = None
+        self.ws: Optional[websockets.WebSocketClientProtocol] = None
         self.data = data
         self.state = ConnectionState()
         self.handshake_task: Optional[asyncio.Task] = None
@@ -26,11 +26,9 @@ class KickWebSocket:
             return False
 
         try:
-            self.ws = await rnet.websocket(
-                url=f"wss://websockets.kick.com/viewer/v1/connect?token={self.data['token']}",
-                read_buffer_size=1024,
-                write_buffer_size=1024,
-                max_message_size=1024
+            self.ws = await websockets.connect(
+                f"wss://websockets.kick.com/viewer/v1/connect?token={self.data['token']}",
+                max_size=1024
             )
             
             logger.info("[+] WebSocket connected")
@@ -107,10 +105,7 @@ class KickWebSocket:
             if message is None:
                 return
                 
-            if not hasattr(message, 'text'):
-                message_str = message.text
-            else:
-                message_str = str(message)
+            message_str = str(message)
 
             if not message_str or message_str.strip() == "":
                 return
@@ -122,18 +117,14 @@ class KickWebSocket:
             parsed_message = json.loads(message_str)
             message_type = parsed_message["type"]
 
-            match message_type:
-                case "channel_handshake":
-                    pass
-                
-                case "ping":
-                    await self._send_pong()
-                
-                case "pong":
-                    pass
-                
-                case _:
-                    pass
+            if message_type == "channel_handshake":
+                pass
+            elif message_type == "ping":
+                await self._send_pong()
+            elif message_type == "pong":
+                pass
+            else:
+                pass
 
         except json.JSONDecodeError:
             pass
@@ -196,7 +187,7 @@ class KickWebSocket:
         }
 
         try:
-            await self.ws.send(Message.from_text(json.dumps(payload)))
+            await self.ws.send(json.dumps(payload))
         except:
             traceback.print_exc()
             self.state.is_connected = False
@@ -208,7 +199,7 @@ class KickWebSocket:
         payload = {"type": "ping"}
 
         try:
-            await self.ws.send(Message.from_text(json.dumps(payload)))
+            await self.ws.send(json.dumps(payload))
         except:
             traceback.print_exc()
             self.state.is_connected = False
@@ -222,7 +213,7 @@ class KickWebSocket:
         }
 
         try:
-            await self.ws.send(Message.from_text(json.dumps(payload)))
+            await self.ws.send(json.dumps(payload))
         except:
             traceback.print_exc()
 
@@ -242,7 +233,7 @@ class KickWebSocket:
         }
 
         try:
-            await self.ws.send(Message.from_text(json.dumps(payload)))
+            await self.ws.send(json.dumps(payload))
         except:
             traceback.print_exc()
             self.state.is_connected = False
