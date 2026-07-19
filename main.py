@@ -16,8 +16,13 @@ async def send_chat_periodically(streamer_name, chatroom_id, message, interval_m
     while True:
         try:
             api = KickAPI(config['Private']['token'])
-            api.send_message(chatroom_id, message)
-            logger.info(f"[CHAT] '{message}' sent to {streamer_name}")
+            
+            if api.is_stream_live(streamer_name):
+                api.send_message(chatroom_id, message)
+                logger.info(f"[CHAT] '{message}' sent to {streamer_name}")
+            else:
+                logger.info(f"[CHAT] Stream offline, skipping message for {streamer_name}")
+            
             await asyncio.sleep(interval_minutes * 60)
         except asyncio.CancelledError:
             break

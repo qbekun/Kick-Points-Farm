@@ -57,6 +57,18 @@ class KickAPI:
         
         return response.json()['data']['points']
     
+    def is_stream_live(self, username: str) -> bool:
+        try:
+            response = self.session.get(f"https://kick.com/api/v2/channels/{username}/videos")
+            if response.status_code != 200:
+                return False
+            
+            data = response.json()
+            live_stream = next((stream for stream in data if stream['is_live'] == True), None)
+            return live_stream is not None
+        except:
+            return False
+    
     def send_message(self, chatroom_id: int, content: str) -> bool:
         message_ref = str(int(time.time() * 1000))
         payload = {
