@@ -10,6 +10,23 @@ async def main():
     tasks = [asyncio.create_task(handle_streamer(streamer)) for streamer in config['Streamers']]
     await asyncio.gather(*tasks)
 
+async def wait_for_stream(streamer_name):
+    logger.info(f"[WAITING] {streamer_name} - waiting for stream to start...")
+    
+    while True:
+        try:
+            await asyncio.sleep(300)  # Check every 5 minutes
+            api = KickAPI(config['Private']['token'])
+            
+            if api.is_stream_live(streamer_name):
+                logger.info(f"[ONLINE] {streamer_name} is now live!")
+                await handle_streamer({"name": streamer_name})
+                break
+        except asyncio.CancelledError:
+            break
+        except:
+            traceback.print_exc()
+
 async def send_chat_periodically(streamer_name, chatroom_id, message, interval_minutes):
     await asyncio.sleep(interval_minutes * 60)
     
@@ -55,11 +72,16 @@ async def handle_streamer(streamer_config):
             return
 
         stream_id = api.get_stream_id(streamer_name)
+        if not stream_id:
+            logger.warning(f"[OFFLINE] {streamer_name} is not streaming")
+            asyncio.create_task(wait_for_stream(streamer_name))
+            return
+            
         channel_id = api.get_channel_id(streamer_name)
         chatroom_id = api.get_chatroom_id(streamer_name)
 
-        if not stream_id or not channel_id or not chatroom_id:
-            logger.error(f"Failed to get IDs for {streamer_name}")
+        if not channel_id or not chatroom_id:
+            logger.error(f"Failed to get channel/chatroom ID for {streamer_name}")
             return
 
         logger.info(f"[INFO] Channel: {channel_id} | Chatroom: {chatroom_id}")
